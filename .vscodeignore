@@ -1,0 +1,11 @@
+# files the official `vsce package` / `vsce publish` leaves out
+src/**
+scripts/**
+preview/**
+site/**
+art/**
+.claude/**
+.github/**
+.vscode/**
+.gitignore
+*.vsix

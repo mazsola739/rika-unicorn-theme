@@ -1,0 +1,76 @@
+{
+  "name": "rika-unicorn-theme",
+  "displayName": "Rika Unicorn Theme",
+  "description": "A unicorn, flower and butterfly color theme + icon theme for VS Code, in dark, light, light-blue and teal variants.",
+  "version": "0.2.0",
+  "publisher": "rika",
+  "icon": "images/icon.png",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mazsola739/rika-unicorn-theme.git"
+  },
+  "homepage": "https://mazsola739.github.io/rika-unicorn-theme/",
+  "bugs": {
+    "url": "https://github.com/mazsola739/rika-unicorn-theme/issues"
+  },
+  "galleryBanner": {
+    "color": "#1F1838",
+    "theme": "dark"
+  },
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Themes"
+  ],
+  "keywords": [
+    "theme",
+    "color theme",
+    "icon theme",
+    "unicorn",
+    "pink",
+    "pastel",
+    "cute",
+    "flowers",
+    "butterfly",
+    "dark",
+    "light"
+  ],
+  "contributes": {
+    "themes": [
+      {
+        "label": "Rika Unicorn Dark",
+        "uiTheme": "vs-dark",
+        "path": "./themes/rika-unicorn-dark-color-theme.json"
+      },
+      {
+        "label": "Rika Unicorn Light",
+        "uiTheme": "vs",
+        "path": "./themes/rika-unicorn-light-color-theme.json"
+      },
+      {
+        "label": "Rika Butterfly Sky",
+        "uiTheme": "vs",
+        "path": "./themes/rika-butterfly-sky-color-theme.json"
+      },
+      {
+        "label": "Rika Sweet Teal",
+        "uiTheme": "vs-dark",
+        "path": "./themes/rika-sweet-teal-color-theme.json"
+      }
+    ],
+    "iconThemes": [
+      {
+        "id": "rika-unicorn-icons",
+        "label": "Rika Unicorn Icons",
+        "path": "./icons/rika-icon-theme.json"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "package": "node scripts/build.mjs && node scripts/pack.mjs",
+    "publish:marketplace": "npx @vscode/vsce publish"
+  }
+}
