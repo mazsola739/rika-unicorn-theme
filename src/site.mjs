@@ -103,12 +103,13 @@ export function siteParts() {
     </div>`;
   };
 
-  const installCmd = `code --install-extension ${pkg.name}-${pkg.version}.vsix`;
+  const extId = `${pkg.publisher}.${pkg.name}`;
+  const installCmd = `code --install-extension ${extId}`;
+  const marketplaceUrl = `https://marketplace.visualstudio.com/items?itemName=${extId}`;
   const repoUrl = String(pkg.repository?.url ?? '').replace(/\.git$/, '');
   const releaseUrl = repoUrl ? `${repoUrl}/releases/latest` : '';
-  const ctas = repoUrl
-    ? `<div class="ctas"><a class="btn primary" href="${releaseUrl}">Download the .vsix</a><a class="btn" href="${repoUrl}">Source on GitHub</a></div>`
-    : '';
+  const ctas = `<div class="ctas"><a class="btn primary" href="${marketplaceUrl}">Install from the Marketplace</a>${
+    repoUrl ? `<a class="btn" href="${releaseUrl}">Download the .vsix</a><a class="btn" href="${repoUrl}">Source on GitHub</a>` : ''}</div>`;
 
   const headHtml = `<title>Rika Unicorn Theme</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -322,7 +323,7 @@ ${sprite}
     <span class="eyebrow">Try it</span>
     <h2 id="install-h">Install</h2>
     <div class="install">
-      ${releaseUrl ? `<p>Download <code>${pkg.name}-${pkg.version}.vsix</code> from <a href="${releaseUrl}">GitHub Releases</a>, then run:</p>` : ''}
+      <p>Search for <b>Rika Unicorn</b> in the VS Code Extensions view (<kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>X</kbd>), or run:</p>
       <div class="cmd"><pre id="cmd">${installCmd}</pre><button type="button" class="copy" id="copy">Copy</button></div>
       <ol>
         <li>Pick a color theme: <kbd>Ctrl</kbd> <kbd>K</kbd> then <kbd>Ctrl</kbd> <kbd>T</kbd>, then <b>Rika Unicorn Dark</b>, <b>Light</b>, <b>Butterfly Sky</b> or <b>Sweet Teal</b>.</li>

@@ -2,7 +2,7 @@
 
 Four color themes and a cute file icon theme for VS Code, colored from a unicorn, flowers and butterflies.
 
-**[Showcase page](https://mazsola739.github.io/rika-unicorn-theme/)** · **[Download the .vsix](https://github.com/mazsola739/rika-unicorn-theme/releases/latest)**
+**[VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=mazsola739.rika-unicorn-theme)** · **[Showcase page](https://mazsola739.github.io/rika-unicorn-theme/)** · **[Download the .vsix](https://github.com/mazsola739/rika-unicorn-theme/releases/latest)**
 
 ![All four themes](images/themes.gif)
 
@@ -19,11 +19,13 @@ Every theme has rainbow bracket pairs, matching terminal colors, and code colors
 
 ## Install
 
-Download the `.vsix` from [Releases](https://github.com/mazsola739/rika-unicorn-theme/releases/latest), then:
+In VS Code, open Extensions (`Ctrl+Shift+X`), search for **Rika Unicorn** and click **Install**. Or run:
 
 ```bash
-code --install-extension rika-unicorn-theme-0.2.0.vsix
+code --install-extension mazsola739.rika-unicorn-theme
 ```
+
+Then:
 
 1. `Ctrl+K Ctrl+T` → pick a Rika theme
 2. `Ctrl+Shift+P` → *File Icon Theme* → *Rika Unicorn Icons*

@@ -9,3 +9,5 @@ art/**
 .vscode/**
 .gitignore
 *.vsix
+images/**
+!images/icon.png

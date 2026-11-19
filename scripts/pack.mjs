@@ -20,7 +20,8 @@ const absolutizeImages = (md) => (rawBase
 if (!rawBase) console.warn('⚠ No GitHub "repository" in package.json: README images will not show inside VS Code.');
 
 // What goes into the package
-const INCLUDE = ['package.json', 'README.md', 'CHANGELOG.md', 'LICENSE', 'themes', 'icons', 'images'];
+// (README screenshots load from GitHub, so only the extension icon ships from images/)
+const INCLUDE = ['package.json', 'README.md', 'CHANGELOG.md', 'LICENSE', 'themes', 'icons', pkg.icon].filter(Boolean);
 
 const walk = (p) => (statSync(p).isDirectory() ? readdirSync(p).flatMap((n) => walk(join(p, n))) : [p]);
 const files = INCLUDE.flatMap((p) => {
