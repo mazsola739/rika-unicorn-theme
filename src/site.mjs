@@ -10,14 +10,14 @@ const root = new URL('../', import.meta.url);
 const pkg = JSON.parse(readFileSync(new URL('package.json', root), 'utf8'));
 
 const DESCRIPTIONS = {
-  'rika-unicorn-dark': 'The midnight-blue mane. Pink keywords, golden strings, and a cursor the color of the horn.',
-  'rika-unicorn-light': 'Soft pink, like the unicorn’s blush, with darker code colors that stay easy to read.',
+  'rika-unicorn-dark': 'Midnight blue from the mane, with pink keywords and golden strings.',
+  'rika-unicorn-light': 'Soft pink, like the unicorn’s blush. Darker code colors keep it readable.',
   'rika-butterfly-sky': 'Light blue from the butterfly’s wings, with pink and purple accents.',
   'rika-sweet-teal': 'The teal of the “You are sweet.” card, with the pink of its lettering.',
 };
 
 const PALETTE_GROUPS = [
-  ['The mane', ['hotPink', 'pink', 'blush', 'rose', 'magenta', 'lilac', 'purple', 'plum', 'indigo', 'midnight']],
+  ['Mane', ['hotPink', 'pink', 'blush', 'rose', 'magenta', 'lilac', 'purple', 'plum', 'indigo', 'midnight']],
   ['Horn & flowers', ['gold', 'yellow', 'cream', 'red', 'orange', 'peach', 'leaf', 'white']],
   ['Butterfly & card', ['sky', 'blue', 'ocean', 'flowerBlue', 'teal']],
 ];
@@ -50,7 +50,7 @@ export function siteParts() {
   const sprite = Object.entries(files)
     .map(([name, svgText]) => `.i-${name.replace('.svg', '')}{background-image:url("data:image/svg+xml,${encodeURIComponent(svgText.trim())}")}`)
     .join('\n');
-  const iconPng = readFileSync(new URL('images/icon.png', root)).toString('base64');
+  const heroArt = readFileSync(new URL('images/hero.webp', root)).toString('base64');
   const fi = (id, cls = '') => `<span class="fi${cls} i-${id}" aria-hidden="true"></span>`;
 
   const sample = buildTheme(variants[0]);
@@ -58,36 +58,43 @@ export function siteParts() {
     themes: variants.length,
     icons: Object.keys(files).length,
     languages: Object.keys(iconTheme.languageIds).length,
-    folders: Object.keys(iconTheme.folderNames).length,
     uiKeys: Object.keys(sample.colors).length,
     rules: sample.tokenColors.length,
     colors: Object.keys(palette).length,
   };
 
-  const tabs = variants.map((v, i) =>
-    `<button type="button" class="tab-btn" id="tab-${v.id}" role="tab" aria-controls="stage" aria-selected="${i === 0}" data-theme-tab="${v.id}">
-      <span class="dots" aria-hidden="true"><i style="background:${v.ui.bg}"></i><i style="background:${v.syntax.keyword}"></i><i style="background:${v.syntax.string}"></i></span>
-      ${short(v.label)}
-    </button>`).join('');
+  // Links
+  const author = typeof pkg.author === 'string' ? { name: pkg.author } : (pkg.author ?? {});
+  const extId = `${pkg.publisher}.${pkg.name}`;
+  const installCmd = `code --install-extension ${extId}`;
+  const marketplaceUrl = `https://marketplace.visualstudio.com/items?itemName=${extId}`;
+  const repoUrl = String(pkg.repository?.url ?? '').replace(/\.git$/, '');
+  const releaseUrl = repoUrl ? `${repoUrl}/releases/latest` : '';
+  const backLink = author.url
+    ? `<nav class="topbar" aria-label="Portfolio"><a href="${author.url}">← ${author.name ? `${author.name}’s portfolio` : 'Portfolio'}</a></nav>`
+    : '';
 
+  const tabs = variants.map((v, i) =>
+    `<button type="button" class="seg" id="tab-${v.id}" role="tab" aria-controls="stage" aria-selected="${i === 0}" data-theme-tab="${v.id}">
+      <span class="dots" aria-hidden="true"><i style="background:${v.ui.bg}"></i><i style="background:${v.syntax.keyword}"></i><i style="background:${v.syntax.func}"></i></span>${short(v.label)}
+    </button>`).join('');
   const windows = variants.map((v, i) => windowHtml(v, (id) => fi(id)).replace('<section class="theme"', `<section class="theme"${i ? ' hidden' : ''}`)).join('');
-  const descs = variants.map((v, i) => `<p class="desc" data-desc="${v.id}"${i ? ' hidden' : ''}><b>${v.label}.</b> ${DESCRIPTIONS[v.id] ?? ''}</p>`).join('');
+  const descs = variants.map((v, i) => `<p class="desc" data-desc="${v.id}"${i ? ' hidden' : ''}>${DESCRIPTIONS[v.id] ?? ''}</p>`).join('');
 
   const used = new Set(PALETTE_GROUPS.flatMap(([, keys]) => keys));
   const groups = PALETTE_GROUPS.map(([name, keys], gi) => {
     const extra = gi === PALETTE_GROUPS.length - 1 ? Object.keys(palette).filter((k) => !used.has(k)) : [];
     const chips = [...keys, ...extra].filter((k) => palette[k]).map((k) =>
-      `<li class="chip"><span class="chip-color" style="background:${palette[k]}"></span><span class="chip-name">${k}</span><code>${palette[k]}</code></li>`).join('');
-    return `<div class="pgroup"><h3>${name}</h3><ul class="chips">${chips}</ul></div>`;
+      `<li><span class="sw" style="background:${palette[k]}"></span><span class="sw-name">${k}</span><code>${palette[k]}</code></li>`).join('');
+    return `<div class="pgroup"><h3>${name}</h3><ul class="swatches">${chips}</ul></div>`;
   }).join('');
 
   const head = variants.map((v) => `<th scope="col">${short(v.label)}</th>`).join('');
   const rows = ROLES.map(([name, key, text]) => {
     const cells = variants.map((v) => {
       const col = v.syntax[key];
-      const r = ratio(col, v.ui.bg);
       const italic = key === 'comment' ? ';font-style:italic' : '';
-      return `<td style="background:${v.ui.bg}"><span class="tok" style="color:${col}${italic}">${text}</span><span class="ratio" style="color:${v.ui.fgMuted}">${r.toFixed(1)}:1</span></td>`;
+      return `<td style="background:${v.ui.bg}"><span class="tok" style="color:${col}${italic}">${text}</span><span class="ratio" style="color:${v.ui.fgMuted}">${ratio(col, v.ui.bg).toFixed(1)}:1</span></td>`;
     }).join('');
     return `<tr><th scope="row">${name}</th>${cells}</tr>`;
   }).join('');
@@ -103,176 +110,169 @@ export function siteParts() {
     </div>`;
   };
 
-  // package.json "author": { "name", "url" } → a link back to the author's portfolio
-  const author = typeof pkg.author === 'string' ? { name: pkg.author } : (pkg.author ?? {});
-  const backLink = author.url
-    ? `<nav class="topbar" aria-label="Portfolio"><a href="${author.url}">← ${author.name ? `${author.name}’s portfolio` : 'Portfolio'}</a></nav>`
-    : '';
-  const madeBy = author.url ? `<span>Made by <a href="${author.url}">${author.name ?? author.url}</a></span>` : '';
-  const extId = `${pkg.publisher}.${pkg.name}`;
-  const installCmd = `code --install-extension ${extId}`;
-  const marketplaceUrl = `https://marketplace.visualstudio.com/items?itemName=${extId}`;
-  const repoUrl = String(pkg.repository?.url ?? '').replace(/\.git$/, '');
-  const releaseUrl = repoUrl ? `${repoUrl}/releases/latest` : '';
-  const ctas = `<div class="ctas"><a class="btn primary" href="${marketplaceUrl}">Install from the Marketplace</a>${
-    repoUrl ? `<a class="btn" href="${releaseUrl}">Download the .vsix</a><a class="btn ghost" href="${repoUrl}">Source on GitHub</a>` : ''}</div>`;
+  const sectionHead = (id, title, text) =>
+    `<div class="head"><h2 id="${id}">${title}</h2><p>${text}</p></div>`;
 
   const headHtml = `<title>Rika Unicorn Theme</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="${pkg.description}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Fredoka:wght@500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;600&family=Nunito:wght@700;800&display=swap">
 <style>
-/* Layout: one centered column. Hero (name + icon), a theme stage with a live mock editor,
-   then the palette, code colors with contrast, icons, how it is built, and install. */
+/* Layout: one light, pastel page in the mood of the artwork. A teal card hero (like the
+   "You are sweet." card) with the unicorn, then sections with a two-column head
+   (title left, one sentence right) over their content. */
 :root {
-  --bg: #FFF7FA;
+  color-scheme: light;
+  --paper: #FFF5F8;
   --surface: #FFFFFF;
-  --ink: #2A1E47;
-  --muted: #6B5B8C;
-  --line: #EFDAE7;
-  --accent: #C2136A;
-  --accent-soft: #FCE3EF;
-  --mane-1: #F0296C;
-  --mane-2: #914BB0;
-  --mane-3: #36246E;
-  --shadow: 0 30px 70px -30px rgba(54, 36, 110, .45);
-  --f-display: 'Fredoka', 'Nunito', 'Segoe UI', system-ui, sans-serif;
+  --tint: #FCE6EF;
+  --ink: #241B47;
+  --muted: #6A5E88;
+  --line: #F0DCE6;
+  --pink: #D2246C;
+  --pink-ink: #B3165A;
+  --teal-1: #93D5DD;
+  --teal-2: #5FB4C2;
+  --card-ink: #16304A;
+  --shadow: 0 24px 50px -28px rgba(110, 40, 90, .35);
+  --r: 16px;
+  --f-display: 'Nunito', 'Segoe UI', system-ui, sans-serif;
   --f-body: 'DM Sans', 'Segoe UI', system-ui, sans-serif;
   --f-mono: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #130E24; --surface: #1C1534; --ink: #F1E9FA; --muted: #B2A3D3; --line: #2E2554;
-    --accent: #FF73B0; --accent-soft: #2E1F4A; --mane-1: #FF6FAE; --mane-2: #C99BFF; --mane-3: #8FB8FF;
-    --shadow: 0 30px 70px -30px rgba(0, 0, 0, .7); color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #130E24; --surface: #1C1534; --ink: #F1E9FA; --muted: #B2A3D3; --line: #2E2554;
-  --accent: #FF73B0; --accent-soft: #2E1F4A; --mane-1: #FF6FAE; --mane-2: #C99BFF; --mane-3: #8FB8FF;
-  --shadow: 0 30px 70px -30px rgba(0, 0, 0, .7); color-scheme: dark;
-}
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 var(--f-body); }
-.wrap { max-width: 1180px; margin: 0 auto; padding-block: 0; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
-section.block { padding-block: clamp(48px, 8vw, 96px) 0; display: grid; gap: 24px; }
-h1, h2, h3 { font-family: var(--f-display); font-weight: 600; text-wrap: balance; margin: 0; line-height: 1.1; }
-h2 { font-size: clamp(28px, 4vw, 40px); }
-h3 { font-size: 18px; }
-p { margin: 0; max-width: 65ch; }
-.eyebrow { font: 600 12px/1 var(--f-body); letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
-.lede { color: var(--muted); font-size: 18px; }
-code, pre { font-family: var(--f-mono); }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.6 var(--f-body); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 0 8px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--f-display); font-weight: 800; margin: 0; line-height: 1.15; text-wrap: balance; letter-spacing: -.01em; }
+h2 { font-size: clamp(26px, 3.2vw, 34px); }
+h3 { font-size: 16px; }
+p { margin: 0; }
+a { color: var(--pink-ink); text-underline-offset: 3px; }
+code { font-family: var(--f-mono); }
+:focus-visible { outline: 2px solid var(--pink); outline-offset: 2px; }
 
-/* Hero */
-.hero { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: clamp(24px, 5vw, 64px); align-items: center; padding-block: clamp(40px, 8vw, 88px) 0; }
-.hero h1 { font-size: clamp(48px, 9vw, 104px); letter-spacing: -.02em; margin-block: 14px 18px; }
-.hero h1 .mane { background: linear-gradient(100deg, var(--mane-1), var(--mane-2) 55%, var(--mane-3)); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.facts { display: flex; flex-wrap: wrap; gap: 8px 22px; margin: 26px 0 0; padding: 0; list-style: none; color: var(--muted); font-size: 15px; }
-.facts b { color: var(--ink); font-family: var(--f-display); font-size: 22px; font-weight: 600; margin-right: 4px; font-variant-numeric: tabular-nums; }
-.ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
-.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 46px; padding: 0 22px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 600 15px/1 var(--f-body); text-decoration: none; }
-.btn:hover { border-color: var(--accent); }
-.btn.primary { background: var(--accent); border-color: var(--accent); color: #FFFFFF; }
-.btn.ghost { border-color: transparent; background: transparent; padding-inline: 10px; text-decoration: underline; text-underline-offset: 4px; }
-.btn.ghost:hover { border-color: transparent; color: var(--accent); }
-.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.hero-icon { width: clamp(140px, 22vw, 240px); max-width: 100%; height: auto; display: block; filter: drop-shadow(0 24px 40px rgba(54, 36, 110, .35)); }
+.topbar { padding-block: 18px 0; font-size: 14px; }
+.topbar a { color: var(--muted); text-decoration: none; }
+.topbar a:hover { color: var(--pink-ink); }
 
-/* Theme stage */
-.tabs-row { display: flex; flex-wrap: wrap; gap: 10px; }
-.tab-btn { display: inline-flex; align-items: center; gap: 10px; padding: 9px 16px 9px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 500 15px/1 var(--f-body); cursor: pointer; }
-.tab-btn:hover { border-color: var(--accent); }
-.tab-btn[aria-selected="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--ink); }
-.tab-btn:focus-visible, .copy:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Hero: the teal card */
+.hero { margin-top: 24px; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); align-items: center; gap: 24px;
+        border-radius: 28px; padding: clamp(28px, 5vw, 56px); padding-block-end: 0; overflow: hidden; color: var(--card-ink);
+        background: radial-gradient(120% 90% at 85% 30%, rgba(255, 255, 255, .45), transparent 60%), linear-gradient(160deg, var(--teal-1), var(--teal-2)); }
+.hero-text { display: grid; gap: 18px; align-content: center; padding-bottom: clamp(28px, 5vw, 56px); }
+.hero h1 { font-size: clamp(38px, 5.4vw, 58px); }
+.hero .sub { font-size: clamp(17px, 1.8vw, 20px); max-width: 30ch; }
+.meta { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 10px; font-size: 14px; font-weight: 500; }
+.meta li { background: rgba(255, 255, 255, .55); border-radius: 999px; padding: 4px 12px; }
+.meta b { font-weight: 700; font-variant-numeric: tabular-nums; }
+.hero-art { align-self: end; justify-self: center; display: block; width: 100%; max-width: 360px; height: auto; }
+
+.actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
+.cta { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 22px; border-radius: 14px;
+       font: 600 15px/1 var(--f-body); text-decoration: none; border: 1px solid transparent; cursor: pointer; }
+.cta.primary { background: var(--pink); color: #FFFFFF; box-shadow: 0 10px 22px -12px rgba(178, 22, 90, .8); }
+.cta.primary:hover { background: #BC1A5E; }
+.cta.secondary { background: var(--surface); color: var(--ink); border-color: rgba(22, 48, 74, .12); }
+.cta.secondary:hover { border-color: var(--pink); }
+
+/* Sections */
+section.block { padding-block: clamp(48px, 7vw, 72px) 0; display: grid; gap: 24px; }
+.head { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 12px 40px; align-items: end; }
+.head p { color: var(--muted); max-width: 60ch; }
+
+/* Theme preview */
+.picker { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+.segs { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+.seg { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px 0 10px; border: 0; border-radius: 10px;
+       background: transparent; color: var(--muted); font: 600 14px/1 var(--f-body); cursor: pointer; }
+.seg:hover { color: var(--ink); }
+.seg[aria-selected="true"] { background: var(--tint); color: var(--ink); }
 .dots { display: inline-flex; }
-.dots i { width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 0 0 2px var(--surface); }
-.dots i + i { margin-left: -4px; }
-.desc { color: var(--muted); min-height: 1.6em; }
-.desc b { color: var(--ink); font-weight: 700; }
-.stage { position: relative; width: 100%; aspect-ratio: 1240 / 760; overflow: hidden; border-radius: 14px; box-shadow: var(--shadow); }
+.dots i { width: 12px; height: 12px; border-radius: 50%; box-shadow: 0 0 0 2px var(--surface); }
+.dots i + i { margin-left: -3px; }
+.desc { color: var(--muted); font-size: 15px; }
+.frame { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 8px; box-shadow: var(--shadow); }
+.stage { position: relative; width: 100%; aspect-ratio: 1240 / 760; overflow: hidden; border-radius: 13px; }
 .stage.sized { aspect-ratio: auto; }
 .stage section.theme { position: absolute; inset: 0 auto auto 0; overflow: hidden; }
-.swipe-hint { display: none; margin: -8px 0 0; font-size: 13px; color: var(--muted); }
 .stage h2 { display: none; }
 .stage .win { width: 1240px; height: 760px; transform-origin: 0 0; border-radius: 0; box-shadow: none; text-align: left; line-height: 1.4; }
 .stage .editor, .stage .term { font-family: var(--f-mono); }
+.hint { display: none; font-size: 13px; color: var(--muted); }
 ${WINDOW_CSS}
 .fi { display: inline-block; width: 16px; height: 16px; flex: none; background: center / contain no-repeat; vertical-align: middle; }
 .fi.lg { width: 32px; height: 32px; }
 
 /* Palette */
-.pgroups { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 28px; }
-.pgroup { display: grid; gap: 12px; align-content: start; }
-.pgroup h3 { font-size: 15px; color: var(--muted); font-family: var(--f-body); font-weight: 600; }
-.chips { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 12px; }
-.chip { display: grid; gap: 2px; font-size: 13px; }
-.chip-color { height: 52px; border-radius: 10px; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .08); margin-bottom: 4px; }
-.chip-name { font-weight: 500; }
-.chip code { font-size: 12px; color: var(--muted); }
+.pgroups { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px; align-items: start; }
+.pgroup { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; display: grid; gap: 14px; align-content: start; }
+.pgroup h3 { font: 600 14px/1.2 var(--f-body); color: var(--muted); }
+.swatches { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 14px 10px; }
+.swatches li { display: grid; gap: 2px; font-size: 12px; }
+.sw { height: 40px; border-radius: 10px; box-shadow: inset 0 0 0 1px rgba(36, 27, 71, .1); margin-bottom: 4px; }
+.sw-name { font-weight: 600; }
+.swatches code { font-size: 11px; color: var(--muted); }
 
-/* Code colors table */
-.table-scroll { overflow-x: auto; border-radius: 14px; border: 1px solid var(--line); }
+/* Contrast table */
+.table-scroll { overflow-x: auto; border-radius: var(--r); border: 1px solid var(--line); background: var(--surface); }
 table { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 14px; }
 th, td { padding: 12px 16px; text-align: left; }
 thead th { font: 600 13px/1.2 var(--f-body); color: var(--muted); background: var(--surface); border-bottom: 1px solid var(--line); }
-tbody th { font-weight: 500; background: var(--surface); white-space: nowrap; }
-thead th:first-child, tbody th { position: sticky; left: 0; z-index: 1; box-shadow: 1px 0 0 var(--line); }
+tbody th { font-weight: 600; background: var(--surface); white-space: nowrap; }
 tbody tr + tr th { border-top: 1px solid var(--line); }
+thead th:first-child, tbody th { position: sticky; left: 0; z-index: 1; box-shadow: 1px 0 0 var(--line); }
 td .tok { font: 600 15px/1.2 var(--f-mono); margin-right: 10px; }
 td .ratio { font: 12px/1 var(--f-mono); font-variant-numeric: tabular-nums; }
-.note { color: var(--muted); font-size: 14px; }
 
 /* Icons */
-.ipanels { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); gap: 20px; }
-.ipanel { border-radius: 14px; padding: 22px; display: grid; gap: 18px; align-content: start; }
-.ipanel h3 { font-size: 16px; }
-.igrid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 14px 8px; font-size: 12px; text-align: center; }
-.igrid.folders { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
+.ipanels { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 16px; }
+.ipanel { border-radius: var(--r); padding: 22px; display: grid; gap: 18px; align-content: start; }
+.ipanel h3 { font: 600 14px/1.2 var(--f-body); }
+.igrid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 14px 6px; font-size: 12px; text-align: center; }
+.igrid.folders { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); }
 .igrid li { display: grid; justify-items: center; gap: 4px; }
 .pair { display: flex; gap: 4px; }
 
-/* How it's built */
-.steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 16px; counter-reset: step; }
-.steps li { counter-increment: step; border-top: 2px solid var(--line); padding-top: 14px; display: grid; gap: 6px; align-content: start; }
-.steps li::before { content: counter(step); font: 600 14px/1 var(--f-display); color: var(--accent); }
-.steps h3 { font-size: 18px; }
-.steps p { color: var(--muted); font-size: 15px; }
+/* How it's made */
+.steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); gap: 12px; counter-reset: step; }
+.steps li { counter-increment: step; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; display: grid; gap: 6px; align-content: start; }
+.steps li::before { content: counter(step); display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--tint); color: var(--pink-ink); font: 700 13px/1 var(--f-body); }
+.steps h3 { font-size: 17px; }
+.steps p { color: var(--muted); font-size: 14px; }
 
 /* Install */
-.install { display: grid; gap: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: clamp(20px, 4vw, 32px); }
+.install { display: grid; gap: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: clamp(20px, 3vw, 28px); }
+.install p { color: var(--muted); }
 .cmd { display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap; }
-.cmd pre { flex: 1 1 320px; min-width: 0; margin: 0; padding: 14px 16px; border-radius: 10px; background: var(--bg); border: 1px solid var(--line); overflow-x: auto; font-size: 14px; }
-.copy { border: 0; border-radius: 10px; padding: 0 20px; min-height: 46px; background: var(--accent); color: #FFFFFF; font: 600 15px/1 var(--f-body); cursor: pointer; }
+.cmd pre { flex: 1 1 320px; min-width: 0; margin: 0; padding: 14px 16px; border-radius: 12px; background: var(--paper); border: 1px solid var(--line); overflow-x: auto; font: 14px/1.4 var(--f-mono); }
 .install ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; color: var(--muted); }
 .install ol b { color: var(--ink); font-weight: 600; }
-.install p { color: var(--muted); }
-.install a { color: var(--accent); }
-kbd { font: 12px/1 var(--f-mono); padding: 3px 6px; border-radius: 5px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+kbd { font: 12px/1 var(--f-mono); padding: 3px 6px; border-radius: 6px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); }
 
-.topbar { padding-block: 20px 0; font-size: 14px; }
-.topbar a, footer a { color: var(--muted); text-underline-offset: 3px; }
-.topbar a:hover, footer a:hover { color: var(--accent); }
-.topbar + .hero { padding-block-start: clamp(24px, 6vw, 64px); }
-footer { padding-block: 64px 48px; color: var(--muted); font-size: 14px; display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; }
+footer { margin-top: 56px; padding-block: 24px 40px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; }
+footer a { color: var(--muted); }
 
-/* Tablet: stack the hero so the buttons get the full width */
-@media (max-width: 900px) {
-  .hero { grid-template-columns: 1fr; }
-  .hero-icon { order: -1; width: clamp(120px, 20vw, 168px); }
+/* Tablet */
+@media (max-width: 860px) {
+  .head { grid-template-columns: 1fr; }
+}
+@media (max-width: 700px) {
+  .hero { grid-template-columns: 1fr; padding-block-end: 0; }
+  .hero-text { padding-bottom: 0; }
+  .hero-art { max-width: 260px; }
 }
 
 /* Phone */
 @media (max-width: 640px) {
-  .ctas .btn:not(.ghost) { flex: 1 1 100%; }
-  .ctas .btn.ghost { margin-inline: auto; }
-  /* the editor preview drops the side bar, stays readable and scrolls sideways */
+  .actions .cta { flex: 1 1 100%; }
+  .segs { width: 100%; }
+  .seg { flex: 1 1 calc(50% - 4px); justify-content: center; }
   .stage { overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: thin; }
   .stage .win { width: 900px; grid-template-columns: minmax(0, 1fr); }
   .stage .act, .stage .side { display: none; }
-  .swipe-hint { display: block; }
+  .hint { display: block; }
   table { min-width: 600px; font-size: 13px; }
   th, td { padding: 10px 12px; }
   td .tok { font-size: 13px; margin-right: 6px; }
@@ -287,53 +287,49 @@ ${sprite}
   const bodyHtml = `<div class="wrap">
   ${backLink}
   <header class="hero">
-    <div>
-      <span class="eyebrow">VS Code extension · color + icon theme</span>
-      <h1>Rika <span class="mane">Unicorn</span></h1>
-      <p class="lede">Four color themes and a set of hand-drawn file icons for Visual Studio Code. Every color was sampled from one piece of art: a unicorn with a rainbow mane, flowers, a blue butterfly and a “You are sweet.” card.</p>
-      <ul class="facts">
-        <li><b>${stats.themes}</b>color themes</li>
-        <li><b>${stats.icons}</b>icons</li>
-        <li><b>${stats.languages}</b>languages</li>
-        <li><b>${stats.folders}</b>folder names</li>
+    <div class="hero-text">
+      <h1>Rika Unicorn</h1>
+      <p class="sub">A soft, pastel color theme and file icon set for Visual Studio Code.</p>
+      <ul class="meta">
+        <li><b>${stats.themes}</b> color themes</li>
+        <li><b>${stats.icons}</b> icons</li>
+        <li><b>${stats.languages}</b> languages</li>
+        <li>Free</li>
       </ul>
-      ${ctas}
+      <div class="actions">
+        <a class="cta primary" href="${marketplaceUrl}">Install</a>
+        ${repoUrl ? `<a class="cta secondary" href="${repoUrl}">View on GitHub</a>` : ''}
+      </div>
     </div>
-    <img class="hero-icon" src="data:image/png;base64,${iconPng}" width="240" height="240" alt="The Rika Unicorn Theme icon: a white unicorn with a pink and purple mane on a teal tile">
+    <img class="hero-art" src="data:image/webp;base64,${heroArt}" width="562" height="720" alt="A white unicorn with a pink and purple mane full of flowers">
   </header>
 
   <section class="block" aria-labelledby="themes-h">
-    <span class="eyebrow">The themes</span>
-    <h2 id="themes-h">One palette, four moods</h2>
-    <div class="tabs-row" role="tablist" aria-label="Color themes">${tabs}</div>
-    ${descs}
-    <div class="stage" id="stage" role="tabpanel" aria-label="Live preview of the selected theme">${windows}</div>
-    <p class="swipe-hint">Swipe sideways to see the whole editor.</p>
+    ${sectionHead('themes-h', 'Four themes', 'Two light and two dark, all from the same palette. Pick one to preview it.')}
+    <div class="picker">
+      <div class="segs" role="tablist" aria-label="Color themes">${tabs}</div>
+      ${descs}
+    </div>
+    <div class="frame"><div class="stage" id="stage" role="tabpanel" aria-label="Preview of the selected theme">${windows}</div></div>
+    <p class="hint">Swipe sideways to see the whole editor.</p>
   </section>
 
   <section class="block" aria-labelledby="palette-h">
-    <span class="eyebrow">Palette</span>
-    <h2 id="palette-h">Colors sampled from the artwork</h2>
-    <p class="lede">I quantized the reference images to their dominant colors, then named each one after where it came from. These ${stats.colors} colors drive everything else.</p>
+    ${sectionHead('palette-h', 'Palette', `Every color comes from the artwork: the mane, the horn, the flowers, the butterfly and the card. ${stats.colors} colors in total.`)}
     <div class="pgroups">${groups}</div>
   </section>
 
   <section class="block" aria-labelledby="code-h">
-    <span class="eyebrow">Code colors</span>
-    <h2 id="code-h">Cute, but still readable</h2>
-    <p class="lede">The build measures the WCAG contrast of every syntax color against its editor background. Code stays at 4.5:1 or above and comments at 3:1 or above, in all ${stats.themes} themes.</p>
+    ${sectionHead('code-h', 'Readable code', 'Each syntax color is checked against its background: at least 4.5:1 for code and 3:1 for comments (WCAG).')}
     <div class="table-scroll"><table>
       <thead><tr><th scope="col">Role</th>${head}</tr></thead>
       <tbody>${rows}</tbody>
     </table></div>
-    <p class="swipe-hint">Swipe the table to compare all ${stats.themes} themes.</p>
-    <p class="note">Bracket pairs follow the mane: pink, gold, blue, lilac, green, orange.</p>
+    <p class="hint">Swipe the table to compare all ${stats.themes} themes.</p>
   </section>
 
   <section class="block" aria-labelledby="icons-h">
-    <span class="eyebrow">Icon theme</span>
-    <h2 id="icons-h">Flowers for files, stickers for folders</h2>
-    <p class="lede">Each language gets a motif in its usual colors: JavaScript is a yellow flower, TypeScript a blue one, Python a blue-and-yellow butterfly. Folders get a color and a sticker, and a README gets a tiny unicorn.</p>
+    ${sectionHead('icons-h', 'File icons', 'Each language gets a flower, tulip, butterfly or star in its usual colors. Folders get a color and a sticker.')}
     <div class="ipanels">
       ${iconPanel(variants[0], 'On a dark theme')}
       ${iconPanel(variants[1], 'On a light theme')}
@@ -341,41 +337,39 @@ ${sprite}
   </section>
 
   <section class="block" aria-labelledby="build-h">
-    <span class="eyebrow">How it’s built</span>
-    <h2 id="build-h">Generated from code, end to end</h2>
+    ${sectionHead('build-h', 'How it’s made', 'Everything is generated from code, so one change to the palette updates every theme, icon and screenshot.')}
     <ol class="steps">
-      <li><h3>Sample</h3><p>Pillow quantizes the art into a ${stats.colors}-color palette.</p></li>
-      <li><h3>Generate</h3><p>One palette file writes ${stats.uiKeys} workbench colors and ${stats.rules} syntax rules for each theme.</p></li>
-      <li><h3>Draw</h3><p>Nine SVG motifs, written as code, become ${stats.icons} file and folder icons.</p></li>
-      <li><h3>Check</h3><p>A contrast check flags any code color below the WCAG target.</p></li>
-      <li><h3>Package</h3><p>A zero-dependency packer zips it all into a .vsix.</p></li>
+      <li><h3>Sample</h3><p>Pillow pulls a ${stats.colors}-color palette out of the artwork.</p></li>
+      <li><h3>Generate</h3><p>One file writes ${stats.uiKeys} UI colors and ${stats.rules} syntax rules per theme.</p></li>
+      <li><h3>Draw</h3><p>Nine SVG motifs become ${stats.icons} file and folder icons.</p></li>
+      <li><h3>Check</h3><p>The build flags any code color below the contrast target.</p></li>
+      <li><h3>Package</h3><p>A small script zips it all into a .vsix.</p></li>
     </ol>
   </section>
 
   <section class="block" aria-labelledby="install-h">
-    <span class="eyebrow">Try it</span>
-    <h2 id="install-h">Install</h2>
+    ${sectionHead('install-h', 'Install', 'Search for <b>Rika Unicorn</b> in the Extensions view (<kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>X</kbd>), or run this command.')}
     <div class="install">
-      <p>Search for <b>Rika Unicorn</b> in the VS Code Extensions view (<kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>X</kbd>), or run:</p>
-      <div class="cmd"><pre id="cmd">${installCmd}</pre><button type="button" class="copy" id="copy">Copy</button></div>
+      <div class="cmd"><pre id="cmd">${installCmd}</pre><button type="button" class="cta primary" id="copy">Copy</button></div>
       <ol>
-        <li>Pick a color theme: <kbd>Ctrl</kbd> <kbd>K</kbd> then <kbd>Ctrl</kbd> <kbd>T</kbd>, then <b>Rika Unicorn Dark</b>, <b>Light</b>, <b>Butterfly Sky</b> or <b>Sweet Teal</b>.</li>
+        <li>Choose a theme: <kbd>Ctrl</kbd> <kbd>K</kbd> then <kbd>Ctrl</kbd> <kbd>T</kbd>, and pick <b>Rika Unicorn Dark</b>, <b>Light</b>, <b>Butterfly Sky</b> or <b>Sweet Teal</b>.</li>
         <li>Turn on the icons: <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>P</kbd>, then <b>File Icon Theme</b>, then <b>Rika Unicorn Icons</b>.</li>
       </ol>
+      ${releaseUrl ? `<p>Prefer a file? <a href="${releaseUrl}">Download the .vsix from GitHub</a>.</p>` : ''}
     </div>
   </section>
 
   <footer>
     <span>Rika Unicorn Theme · v${pkg.version}</span>
-    ${madeBy}
-    <span>Built with Node.js, SVG and Pillow</span>
+    ${author.url ? `<span>Made by <a href="${author.url}">${author.name ?? author.url}</a></span>` : ''}
+    <span><a href="${marketplaceUrl}">Marketplace</a>${repoUrl ? ` · <a href="${repoUrl}">GitHub</a>` : ''}</span>
   </footer>
 </div>
 <script>
 (() => {
   const stage = document.getElementById('stage');
   // Scale the 1240px-wide mock editor to the stage. On phones the CSS narrows it to
-  // the editor only, and it keeps a readable minimum scale and scrolls sideways.
+  // the editor only; it keeps a readable minimum scale and scrolls sideways.
   const phone = window.matchMedia('(max-width: 640px)');
   const fit = () => {
     const win = stage.querySelector('section.theme:not([hidden]) .win');
@@ -388,7 +382,6 @@ ${sprite}
     stage.style.height = (h * k) + 'px';
     stage.classList.add('sized');
   };
-  if (phone.addEventListener) phone.addEventListener('change', fit);
   const show = (id) => {
     document.querySelectorAll('[data-theme-tab]').forEach((t) => t.setAttribute('aria-selected', String(t.dataset.themeTab === id)));
     stage.querySelectorAll('section.theme').forEach((s) => { s.hidden = s.id !== id; });
@@ -397,6 +390,7 @@ ${sprite}
     fit();
   };
   document.querySelectorAll('[data-theme-tab]').forEach((t) => t.addEventListener('click', () => show(t.dataset.themeTab)));
+  if (phone.addEventListener) phone.addEventListener('change', fit);
   addEventListener('resize', fit);
   if (window.ResizeObserver) new ResizeObserver(fit).observe(stage);
   fit();

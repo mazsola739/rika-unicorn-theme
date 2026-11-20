@@ -48,3 +48,11 @@ out = Image.new('RGBA', (S, S), (0, 0, 0, 0))
 out.paste(bg, (0, 0), mask)
 out.resize((256, 256), Image.LANCZOS).save(ROOT / 'images' / 'icon.png', optimize=True)
 print('images/icon.png done')
+
+# Hero artwork for the showcase page (images/hero.webp): the unicorn cropped to its
+# visible pixels and sized for a ~420px-tall slot on high-density screens.
+hero = Image.open(ROOT / 'art' / 'unicorn.png').convert('RGBA')
+hero = hero.crop(hero.getchannel('A').point(lambda a: 255 if a > 24 else 0).getbbox())
+hero.thumbnail((720, 720), Image.LANCZOS)
+hero.save(ROOT / 'images' / 'hero.webp', quality=86, method=6)
+print('images/hero.webp done', hero.size)
