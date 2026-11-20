@@ -405,7 +405,9 @@ ${sprite}
 })();
 </script>`;
 
-  return { head: headHtml, body: bodyHtml };
+  // Every link opens in a new tab
+  const body = bodyHtml.replace(/<a (?![^>]*target=)/g, '<a target="_blank" rel="noopener" ');
+  return { head: headHtml, body };
 }
 
 /** Full standalone document, ready to drop into a portfolio site */
