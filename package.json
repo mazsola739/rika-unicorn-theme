@@ -4,6 +4,10 @@
   "description": "A unicorn, flower and butterfly color theme + icon theme for VS Code, in dark, light, light-blue and teal variants.",
   "version": "0.2.0",
   "publisher": "mazsola739",
+  "author": {
+    "name": "mazsola739",
+    "url": "https://mazsola739.github.io/mazsola739/"
+  },
   "icon": "images/icon.png",
   "license": "MIT",
   "repository": {

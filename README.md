@@ -56,3 +56,7 @@ Colors live in `src/themes.mjs`, icons in `src/icons.mjs`.
 npm run build      # themes, icons, preview/ and site/, plus a contrast check
 npm run package    # build + .vsix
 ```
+
+---
+
+Made by [mazsola739](https://mazsola739.github.io/mazsola739/).
