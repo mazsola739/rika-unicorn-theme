@@ -103,13 +103,19 @@ export function siteParts() {
     </div>`;
   };
 
+  // package.json "author": { "name", "url" } → a link back to the author's portfolio
+  const author = typeof pkg.author === 'string' ? { name: pkg.author } : (pkg.author ?? {});
+  const backLink = author.url
+    ? `<nav class="topbar" aria-label="Portfolio"><a href="${author.url}">← ${author.name ? `${author.name}’s portfolio` : 'Portfolio'}</a></nav>`
+    : '';
+  const madeBy = author.url ? `<span>Made by <a href="${author.url}">${author.name ?? author.url}</a></span>` : '';
   const extId = `${pkg.publisher}.${pkg.name}`;
   const installCmd = `code --install-extension ${extId}`;
   const marketplaceUrl = `https://marketplace.visualstudio.com/items?itemName=${extId}`;
   const repoUrl = String(pkg.repository?.url ?? '').replace(/\.git$/, '');
   const releaseUrl = repoUrl ? `${repoUrl}/releases/latest` : '';
   const ctas = `<div class="ctas"><a class="btn primary" href="${marketplaceUrl}">Install from the Marketplace</a>${
-    repoUrl ? `<a class="btn" href="${releaseUrl}">Download the .vsix</a><a class="btn" href="${repoUrl}">Source on GitHub</a>` : ''}</div>`;
+    repoUrl ? `<a class="btn" href="${releaseUrl}">Download the .vsix</a><a class="btn ghost" href="${repoUrl}">Source on GitHub</a>` : ''}</div>`;
 
   const headHtml = `<title>Rika Unicorn Theme</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -167,9 +173,11 @@ code, pre { font-family: var(--f-mono); }
 .facts { display: flex; flex-wrap: wrap; gap: 8px 22px; margin: 26px 0 0; padding: 0; list-style: none; color: var(--muted); font-size: 15px; }
 .facts b { color: var(--ink); font-family: var(--f-display); font-size: 22px; font-weight: 600; margin-right: 4px; font-variant-numeric: tabular-nums; }
 .ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
-.btn { display: inline-flex; align-items: center; min-height: 46px; padding: 0 22px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 600 15px/1 var(--f-body); text-decoration: none; }
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 46px; padding: 0 22px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 600 15px/1 var(--f-body); text-decoration: none; }
 .btn:hover { border-color: var(--accent); }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: #FFFFFF; }
+.btn.ghost { border-color: transparent; background: transparent; padding-inline: 10px; text-decoration: underline; text-underline-offset: 4px; }
+.btn.ghost:hover { border-color: transparent; color: var(--accent); }
 .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .hero-icon { width: clamp(140px, 22vw, 240px); max-width: 100%; height: auto; display: block; filter: drop-shadow(0 24px 40px rgba(54, 36, 110, .35)); }
 @media (prefers-reduced-motion: no-preference) {
@@ -189,7 +197,9 @@ code, pre { font-family: var(--f-mono); }
 .desc { color: var(--muted); min-height: 1.6em; }
 .desc b { color: var(--ink); font-weight: 700; }
 .stage { position: relative; width: 100%; aspect-ratio: 1240 / 760; overflow: hidden; border-radius: 14px; box-shadow: var(--shadow); }
-.stage section.theme { position: absolute; inset: 0 auto auto 0; }
+.stage.sized { aspect-ratio: auto; }
+.stage section.theme { position: absolute; inset: 0 auto auto 0; overflow: hidden; }
+.swipe-hint { display: none; margin: -8px 0 0; font-size: 13px; color: var(--muted); }
 .stage h2 { display: none; }
 .stage .win { width: 1240px; height: 760px; transform-origin: 0 0; border-radius: 0; box-shadow: none; text-align: left; line-height: 1.4; }
 .stage .editor, .stage .term { font-family: var(--f-mono); }
@@ -213,6 +223,7 @@ table { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 14p
 th, td { padding: 12px 16px; text-align: left; }
 thead th { font: 600 13px/1.2 var(--f-body); color: var(--muted); background: var(--surface); border-bottom: 1px solid var(--line); }
 tbody th { font-weight: 500; background: var(--surface); white-space: nowrap; }
+thead th:first-child, tbody th { position: sticky; left: 0; z-index: 1; box-shadow: 1px 0 0 var(--line); }
 tbody tr + tr th { border-top: 1px solid var(--line); }
 td .tok { font: 600 15px/1.2 var(--f-mono); margin-right: 10px; }
 td .ratio { font: 12px/1 var(--f-mono); font-variant-numeric: tabular-nums; }
@@ -245,16 +256,40 @@ td .ratio { font: 12px/1 var(--f-mono); font-variant-numeric: tabular-nums; }
 .install a { color: var(--accent); }
 kbd { font: 12px/1 var(--f-mono); padding: 3px 6px; border-radius: 5px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
 
+.topbar { padding-block: 20px 0; font-size: 14px; }
+.topbar a, footer a { color: var(--muted); text-underline-offset: 3px; }
+.topbar a:hover, footer a:hover { color: var(--accent); }
+.topbar + .hero { padding-block-start: clamp(24px, 6vw, 64px); }
 footer { padding-block: 64px 48px; color: var(--muted); font-size: 14px; display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; }
 
-@media (max-width: 720px) {
+/* Tablet: stack the hero so the buttons get the full width */
+@media (max-width: 900px) {
   .hero { grid-template-columns: 1fr; }
-  .hero-icon { order: -1; }
+  .hero-icon { order: -1; width: clamp(120px, 20vw, 168px); }
+}
+
+/* Phone */
+@media (max-width: 640px) {
+  .ctas .btn:not(.ghost) { flex: 1 1 100%; }
+  .ctas .btn.ghost { margin-inline: auto; }
+  /* the editor preview drops the side bar, stays readable and scrolls sideways */
+  .stage { overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: thin; }
+  .stage .win { width: 900px; grid-template-columns: minmax(0, 1fr); }
+  .stage .act, .stage .side { display: none; }
+  .swipe-hint { display: block; }
+  table { min-width: 600px; font-size: 13px; }
+  th, td { padding: 10px 12px; }
+  td .tok { font-size: 13px; margin-right: 6px; }
+  .ipanel { padding: 16px; }
+  .igrid { grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 12px 4px; font-size: 10.5px; }
+  .igrid.folders { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); }
+  .igrid span:not(.fi):not(.pair) { overflow-wrap: anywhere; }
 }
 ${sprite}
 </style>`;
 
   const bodyHtml = `<div class="wrap">
+  ${backLink}
   <header class="hero">
     <div>
       <span class="eyebrow">VS Code extension · color + icon theme</span>
@@ -277,6 +312,7 @@ ${sprite}
     <div class="tabs-row" role="tablist" aria-label="Color themes">${tabs}</div>
     ${descs}
     <div class="stage" id="stage" role="tabpanel" aria-label="Live preview of the selected theme">${windows}</div>
+    <p class="swipe-hint">Swipe sideways to see the whole editor.</p>
   </section>
 
   <section class="block" aria-labelledby="palette-h">
@@ -294,6 +330,7 @@ ${sprite}
       <thead><tr><th scope="col">Role</th>${head}</tr></thead>
       <tbody>${rows}</tbody>
     </table></div>
+    <p class="swipe-hint">Swipe the table to compare all ${stats.themes} themes.</p>
     <p class="note">Bracket pairs follow the mane: pink, gold, blue, lilac, green, orange.</p>
   </section>
 
@@ -334,16 +371,28 @@ ${sprite}
 
   <footer>
     <span>Rika Unicorn Theme · v${pkg.version}</span>
+    ${madeBy}
     <span>Built with Node.js, SVG and Pillow</span>
   </footer>
 </div>
 <script>
 (() => {
   const stage = document.getElementById('stage');
+  // Scale the 1240px-wide mock editor to the stage. On phones the CSS narrows it to
+  // the editor only, and it keeps a readable minimum scale and scrolls sideways.
+  const phone = window.matchMedia('(max-width: 640px)');
   const fit = () => {
-    const k = stage.clientWidth / 1240;
-    stage.querySelectorAll('.win').forEach((w) => { w.style.transform = 'scale(' + k + ')'; });
+    const win = stage.querySelector('section.theme:not([hidden]) .win');
+    if (!win) return;
+    const w = win.offsetWidth;
+    const h = win.offsetHeight;
+    const k = phone.matches ? Math.max(stage.clientWidth / w, 0.66) : stage.clientWidth / w;
+    stage.querySelectorAll('section.theme').forEach((s) => { s.style.width = (w * k) + 'px'; s.style.height = (h * k) + 'px'; });
+    stage.querySelectorAll('.win').forEach((el) => { el.style.transform = 'scale(' + k + ')'; });
+    stage.style.height = (h * k) + 'px';
+    stage.classList.add('sized');
   };
+  if (phone.addEventListener) phone.addEventListener('change', fit);
   const show = (id) => {
     document.querySelectorAll('[data-theme-tab]').forEach((t) => t.setAttribute('aria-selected', String(t.dataset.themeTab === id)));
     stage.querySelectorAll('section.theme').forEach((s) => { s.hidden = s.id !== id; });
