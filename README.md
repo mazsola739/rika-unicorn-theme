@@ -57,6 +57,12 @@ npm run build      # themes, icons, preview/ and site/, plus a contrast check
 npm run package    # build + .vsix
 ```
 
+## License
+
+The themes, the icons and the code are under the [MIT License](LICENSE). The unicorn picture
+(`art/unicorn.png`, the extension icon `images/icon.png` and `images/hero.webp`) was made with AI and is not
+covered by it.
+
 ---
 
 Made by [mazsola739](https://mazsola739.github.io/mazsola739/).
